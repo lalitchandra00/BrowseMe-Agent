@@ -1,0 +1,10 @@
+langchain-google-genai
+langchain-core
+langchain-community
+langchain-classic
+langgraph
+langsmith
+duckduckgo-search
+requests
+python-dotenv
+langchain
