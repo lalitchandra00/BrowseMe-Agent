@@ -2,11 +2,11 @@
 
 ## What this project does
 
-BrowseMe-Agent is a small AI assistant that can search the web before answering a question. For example, you can ask:
+BrowseMe-Agent is a small AI assistant that can search the web and check current weather before answering a question. For example, you can ask:
 
 > What are the three ways to travel from Delhi to Goa?
 
-The assistant can search for current information and then explain the answer in normal language.
+The assistant can search for current information, fetch weather for a city, and explain the answer in normal language.
 
 ## The tools and their roles
 
@@ -29,7 +29,13 @@ This tool performs the web search. It receives a search query and returns search
 
 The tool does not decide what to search or how to explain the results. It only performs its assigned search task.
 
-### 3. LangSmith prompt
+### 3. Custom weather tool
+
+The notebook also defines `get_weather_data`, a custom LangChain tool. It calls the Weatherstack API and returns current weather data for the city provided by the agent.
+
+For example, when the user asks about the weather in Bhopal, the agent can choose this tool instead of the search tool. The `WEATHER_STACK_API` key is loaded from the `.env` file.
+
+### 4. LangSmith prompt
 
 The prompt is a set of instructions that teaches the agent how to work. The ReAct prompt encourages this pattern:
 
@@ -43,7 +49,7 @@ Give the final answer
 
 The prompt is not the search tool and it is not the language model. It is the instruction sheet used by the agent.
 
-### 4. LangChain ReAct agent
+### 5. LangChain ReAct agent
 
 The agent is the decision-maker. It connects the model with the available tools.
 
@@ -58,7 +64,7 @@ It decides:
 
 The agent decides what should happen, but it does not manage the complete execution loop by itself.
 
-### 5. AgentExecutor
+### 6. AgentExecutor
 
 
 The executor is the runtime manager. It carries out the agent's decisions and sends results back to the agent.
@@ -66,8 +72,8 @@ The executor is the runtime manager. It carries out the agent's decisions and se
 It manages:
 - The user's input.
 - Calls to the agent.
-- Calls to the search tool.
-- The results returned by the search tool.
+- Calls to the search and weather tools.
+- The results returned by those tools.
 - Previous actions and observations (`intermediate_steps`).
 - The final answer.
 
@@ -82,12 +88,12 @@ The process is:
 1. The user asks a question.
 2. `AgentExecutor` passes the question to the ReAct agent.
 3. The agent uses the Gemini model to understand the question.
-4. The agent decides that web search can help.
-5. The executor runs `DuckDuckGoSearchRun`.
-6. The search tool returns web results.
-7. The executor gives those results back to the agent.
-8. The agent asks Gemini to interpret the results.
-9. The agent may search again if more information is needed.
+4. The agent decides whether web search or weather data can help.
+5. The executor runs the selected tool.
+6. The tool returns search results or weather data.
+7. The executor gives the result back to the agent.
+8. The agent asks Gemini to interpret the result.
+9. The agent may use another tool if more information is needed.
 10. The agent creates a final response.
 11. The executor returns that response in `result["output"]`.
 
@@ -102,10 +108,10 @@ AgentExecutor
       v
 ReAct agent + Gemini model
       |
-      +---- decides to search
+      +---- decides which tool to use
       |
       v
-DuckDuckGo search tool
+DuckDuckGo search or weather tool
       |
       v
 Search results
@@ -123,6 +129,7 @@ AgentExecutor returns final output
 |---|---|---|
 | Gemini model | The language and reasoning engine | Understands and writes |
 | Search tool | The web browser capability | Finds information |
+| Weather tool | A custom API tool | Gets current weather |
 | Prompt | The instruction sheet | Explains how the agent should behave |
 | Agent | The decision-maker | Chooses actions and tools |
 | AgentExecutor | The runtime manager | Runs actions and manages the loop |
@@ -130,5 +137,5 @@ AgentExecutor returns final output
 A simple analogy:
 
 - The **agent** is the brain deciding what to do.
-- The **search tool** is the assistant's ability to look something up.
+- The **search and weather tools** are the assistant's abilities to look something up.
 - The **AgentExecutor** is the person coordinating the work and passing messages between the brain and the tool.
